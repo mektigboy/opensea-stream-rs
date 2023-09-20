@@ -60,7 +60,7 @@ use phyllo::{
 };
 use schema::StreamEvent;
 use serde_json::Value;
-use tokio::sync::broadcast;
+use tokio::sync::broadcast::Receiver;
 use url::Url;
 
 pub use phyllo;
@@ -85,7 +85,7 @@ pub async fn subscribe_to(
 ) -> Result<
     (
         ChannelHandler<Collection, Event, Value, StreamEvent>,
-        broadcast::Receiver<Message<Collection, Event, Value, StreamEvent>>,
+        Receiver<Message<Collection, Event, Value, StreamEvent>>,
     ),
     RegisterChannelError,
 > {
@@ -100,9 +100,49 @@ pub async fn subscribe_to_with_config(
 ) -> Result<
     (
         ChannelHandler<Collection, Event, Value, StreamEvent>,
-        broadcast::Receiver<Message<Collection, Event, Value, StreamEvent>>,
+        Receiver<Message<Collection, Event, Value, StreamEvent>>,
     ),
     RegisterChannelError,
 > {
     socket.channel(channel_builder).await
 }
+
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
+//     use phyllo::message::{Message, Payload as PhylloPayload};
+//     use schema::Payload as OpenSeaPayload;
+//     use tokio_test::block_on;
+
+//     #[test]
+//     fn test_payload_parsing() {
+//         block_on(async {
+//             // Mock a raw message similar to what you might receive from the WebSocket.
+//             let mock_message = Message {
+//                 topic: Collection::Collection("wandernauts".to_string()),
+//                 event: Event::Other("mock_event".to_string()), // replace with an appropriate mock event
+//                 payload: Some(PhylloPayload::Custom(Value::from(serde_json::json!({
+//                     "payload": {
+//                         "itemListed": {
+//                             "item": "wandernauts-item-1234"
+//                             // ... other mock fields
+//                         }
+//                     }
+//                 })))),
+//                 join_ref: todo!(),
+//                 reference: todo!(),
+//             };
+
+//             // Convert the mock message to your custom payload.
+//             let event = mock_message
+//                 .into_custom_payload()
+//                 .expect("Expected a custom payload");
+//             if let OpenSeaPayload::ItemListed(listing) = event.payload {
+//                 assert_eq!(listing.item, "wandernauts-item-1234");
+//                 // ... other assertions
+//             } else {
+//                 panic!("Expected an ItemListed event");
+//             }
+//         });
+//     }
+// }

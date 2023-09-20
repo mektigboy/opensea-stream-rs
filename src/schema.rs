@@ -4,7 +4,11 @@ use ethers_core::{
     abi::Address,
     types::{H256, U256},
 };
-use serde::{de::Error, Deserialize, Serialize};
+use serde::{
+    de::{Deserializer, Error},
+    Deserialize, Serialize,
+};
+use serde_json::Value;
 use std::{fmt, str::FromStr};
 use url::Url;
 
@@ -43,8 +47,8 @@ pub enum Payload {
 }
 
 impl From<Payload> for Event {
-    fn from(val: Payload) -> Self {
-        match val {
+    fn from(value: Payload) -> Self {
+        match value {
             Payload::ItemListed(_) => Event::ItemListed,
             Payload::ItemSold(_) => Event::ItemSold,
             Payload::ItemTransferred(_) => Event::ItemTransferred,
@@ -65,6 +69,8 @@ pub struct Context {
     pub collection: Collection,
     /// Information about the item itself.
     pub item: Item,
+    // /// Token used for authentication.
+    // pub protocol_data: String,
 }
 
 /// A collection on OpenSea.
@@ -105,14 +111,14 @@ impl<'de> Deserialize<'de> for Collection {
 /// Context about an item.
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Item {
-    /// Identifier.
-    pub nft_id: NftId,
-    /// Link to OpenSea page.
-    pub permalink: Url,
     /// Chain the item is on.
     pub chain: Chain,
     /// Basic metadata.
     pub metadata: Metadata,
+    /// Identifier.
+    pub nft_id: NftId,
+    /// Link to OpenSea page.
+    pub permalink: Url,
 }
 
 /// Identifier of the NFT.
@@ -244,16 +250,14 @@ impl fmt::Display for Chain {
 /// This is fetched directly from an item's metadata according to [metadata standards](https://docs.opensea.io/docs/metadata-standards).
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Metadata {
-    /// Name.
-    pub name: Option<String>,
-    /// Description.
-    pub description: Option<String>,
-    /// Image URL. This is shown on the collection's storefront.
-    pub image_url: Option<Url>,
     /// Animation URL. This is shown on the item's page.
     pub animation_url: Option<Url>,
+    /// Image URL. This is shown on the collection's storefront.
+    pub image_url: Option<Url>,
     /// URL to metadata.
     pub metadata_url: Option<Url>,
+    /// Name.
+    pub name: Option<String>,
 }
 
 /// Payload data for [`Payload::ItemListed`].
@@ -266,7 +270,7 @@ pub struct ItemListedData {
     /// Timestamp of when the listing was created.
     pub event_timestamp: DateTime<Utc>,
     /// Starting price of the listing. See `payment_token` for the actual value of each unit.
-    #[serde(with = "u256_fromstr_radix_10")]
+    #[serde(deserialize_with = "u256_from_dec_str")]
     pub base_price: U256,
     /// Expiration date.
     pub expiration_date: DateTime<Utc>,
@@ -311,7 +315,7 @@ pub struct ItemSoldData {
     /// Number of items bought. This is always `1` for ERC-721 tokens.
     pub quantity: u64,
     /// Purchase price. See `payment_token` for the actual value of each unit.
-    #[serde(with = "u256_fromstr_radix_10")]
+    #[serde(deserialize_with = "u256_from_dec_str")]
     pub sale_price: U256,
     /// Buyer/winner of the listing.
     #[serde(with = "address_fromjson")]
@@ -394,7 +398,7 @@ pub struct ItemReceivedOfferData {
     /// Timestamp of when the offer was received.
     pub event_timestamp: DateTime<Utc>,
     /// Offer price. See `payment_token` for the actual value of each unit.
-    #[serde(with = "u256_fromstr_radix_10")]
+    #[serde(deserialize_with = "u256_from_dec_str")]
     pub base_price: U256,
     /// Timestamp of when the offer was created.
     pub created_date: DateTime<Utc>,
@@ -412,27 +416,116 @@ pub struct ItemReceivedOfferData {
     pub taker: Option<Address>,
 }
 
+/// Docs
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Consideration {
+    /// Docs
+    pub item_type: u8,
+    /// Docs
+    pub token: Address,
+    /// Docs
+    #[serde(deserialize_with = "u256_from_dec_str")]
+    pub identifier_or_criteria: U256,
+    /// Docs
+    #[serde(deserialize_with = "u256_from_dec_str")]
+    pub start_amount: U256,
+    /// Docs
+    #[serde(deserialize_with = "u256_from_dec_str")]
+    pub end_amount: U256,
+    /// Docs
+    pub recipient: Address,
+}
+
+/// Docs
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Offer {
+    /// Docs
+    pub item_type: u8,
+    /// Docs
+    pub token: Address,
+    /// Docs
+    #[serde(deserialize_with = "u256_from_dec_str")]
+    pub identifier_or_criteria: U256,
+    /// Docs
+    #[serde(deserialize_with = "u256_from_dec_str")]
+    pub start_amount: U256,
+    /// Docs
+    #[serde(deserialize_with = "u256_from_dec_str")]
+    pub end_amount: U256,
+}
+
+/// Docs
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Parameters {
+    /// Docs
+    pub conduit_key: H256,
+    /// Docs
+    pub consideration: Vec<Consideration>,
+    /// Docs
+    pub counter: u8,
+    /// Docs
+    #[serde(deserialize_with = "u256_from_dec_str")]
+    pub end_time: U256,
+    /// Docs
+    pub offer: Vec<Offer>,
+    /// Docs
+    // #[serde(with = "address_fromjson")]
+    pub offerer: Address,
+    /// Docs
+    //  #[serde(default)]
+    pub order_type: u8,
+    /// Docs
+    // #[serde(deserialize_with = "u256_from_dec_str")]
+    pub salt: String, // TODO: Fix type!
+    /// Docs
+    #[serde(default)]
+    pub total_original_consideration_items: u8,
+    /// Docs
+    pub zone: Address,
+    /// Docs
+    pub zone_hash: H256,
+}
+
+/// Protocol data.
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ProtocolData {
+    /// Hello
+    pub parameters: Parameters,
+    /// Hello
+    pub signature: Option<String>,
+}
+
 /// Payload data for [`Payload::ItemReceivedBid`].
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ItemReceivedBidData {
-    /// Context
-    #[serde(flatten)]
-    pub context: Context,
-
-    /// Timestamp of when the bid was received.
-    pub event_timestamp: DateTime<Utc>,
-    /// Bid price. See `payment_token` for the actual value of each unit.
-    #[serde(with = "u256_fromstr_radix_10")]
+    // /// Context
+    // #[serde(flatten)]
+    // pub context: Context,
+    /// Base price (wei)
+    #[serde(deserialize_with = "u256_from_dec_str")]
     pub base_price: U256,
-    /// Timestamp of when the bid was created.
+    /// Collection slug
+    pub collection: Collection,
+    /// Creation date (datetime)
     pub created_date: DateTime<Utc>,
-    /// Timestamp of when the bid will expire.
+    /// Event date (datetime)
+    pub event_timestamp: DateTime<Utc>,
+    /// Expiration date (datetime)
     pub expiration_date: DateTime<Utc>,
-    /// Creator of the bid.
-    #[serde(with = "address_fromjson")]
+    /// Item information
+    pub item: Item,
+    /// Maker address
+    #[serde(with = "address_fromjson")] // Is this needed?
     pub maker: Address,
-    /// Token offered for payment.
+    /// Order hash
+    pub order_hash: H256,
+    /// Token offered for payment
     pub payment_token: PaymentToken,
+    /// Protocol data
+    pub protocol_data: ProtocolData,
     /// Number of items on the offer. This is always `1` for ERC-721 tokens.
     pub quantity: u64,
     /// Taker of the bid.
@@ -528,7 +621,7 @@ pub struct PaymentToken {
     pub address: Address,
     /// Granularity of the token
     pub decimals: u64,
-    /// Price of token (denominated in ETH)
+    /// Price of token (ETH)
     #[serde(with = "f64_fromstring")]
     pub eth_price: f64,
     /// Name
@@ -604,4 +697,13 @@ mod f64_fromstring {
     {
         value.to_string().serialize(serializer)
     }
+}
+
+/// Helper function to convert a decimal string to a `U256`.
+fn u256_from_dec_str<'de, D>(deserializer: D) -> Result<U256, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let value = String::deserialize(deserializer)?;
+    U256::from_dec_str(&value).map_err(Error::custom)
 }
