@@ -74,7 +74,7 @@ pub struct Context {
 }
 
 /// A collection on OpenSea.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Collection(String);
 
 impl Serialize for Collection {
@@ -109,7 +109,7 @@ impl<'de> Deserialize<'de> for Collection {
 }
 
 /// Context about an item.
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Item {
     /// Chain the item is on.
     pub chain: Chain,
@@ -122,7 +122,7 @@ pub struct Item {
 }
 
 /// Identifier of the NFT.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct NftId {
     /// Chain the item is on.
     pub network: Chain,
@@ -248,7 +248,7 @@ impl fmt::Display for Chain {
 /// Basic metadata of an item.
 ///
 /// This is fetched directly from an item's metadata according to [metadata standards](https://docs.opensea.io/docs/metadata-standards).
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Metadata {
     /// Animation URL. This is shown on the item's page.
     pub animation_url: Option<Url>,
@@ -417,7 +417,7 @@ pub struct ItemReceivedOfferData {
 }
 
 /// Docs
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Consideration {
     /// Docs
@@ -438,7 +438,7 @@ pub struct Consideration {
 }
 
 /// Docs
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Offer {
     /// Docs
@@ -457,7 +457,7 @@ pub struct Offer {
 }
 
 /// Docs
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Parameters {
     /// Docs
@@ -490,7 +490,7 @@ pub struct Parameters {
 }
 
 /// Protocol data.
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ProtocolData {
     /// Hello
     pub parameters: Parameters,
@@ -499,7 +499,7 @@ pub struct ProtocolData {
 }
 
 /// Payload data for [`Payload::ItemReceivedBid`].
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ItemReceivedBidData {
     // /// Context
     // #[serde(flatten)]
@@ -615,7 +615,7 @@ pub struct Transaction {
 }
 
 /// Token used for payment.
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PaymentToken {
     /// Contract address
     pub address: Address,
