@@ -180,28 +180,28 @@ mod chain {
     use serde::{Deserialize, Serialize};
 
     /// Network an item is on.
-    #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
+    #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
     #[serde(tag = "name", rename_all = "lowercase")]
     #[non_exhaustive]
     pub enum Chain {
-        /// [Ethereum](https://ethereum.org) mainnet.
+        /// Ethereum mainnet.
         Ethereum,
-        /// [Polygon](https://polygon.technology/solutions/polygon-pos) mainnet.
+        /// Polygon mainnet.
         #[serde(rename = "matic")]
         Polygon,
-        /// [Klaytn](https://www.klaytn.foundation/) mainnet.
+        /// Klaytn mainnet.
         Klaytn,
-        /// [Solana](https://solana.com/) mainnet. This variant (and all events for Solana assets) are not supported in this version.
+        /// Solana mainnet. This variant (and all events for Solana assets) are not supported in this version.
         Solana,
 
-        /// [Goerli](https://ethereum.org/en/developers/docs/networks/#goerli) testnet (of Ethereum).
+        /// Ethereum Goerli testnet.
         Goerli,
-        /// [Rinkeby](https://ethereum.org/en/developers/docs/networks/#rinkeby) testnet (of Ethereum).
+        /// Ethereum Rinkeby testnet.
         #[deprecated = "OpenSea no longer supports Rinkeby as the testnet has been deprecated for The Merge."]
         Rinkeby,
-        /// [Mumbai](https://docs.polygon.technology/docs/develop/network-details/network#mumbai-pos-testnet) testnet (of Polygon).
+        /// Polygon Mumbai testnet.
         Mumbai,
-        /// [Baobab](https://www.klaytn.foundation/) testnet (of Klaytn).
+        /// Klaytn Baobab testnet.
         Baobab,
     }
 }
